@@ -28,7 +28,6 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 set(CMAKE_AUTOMOC ON)
-
 find_package(cartographer REQUIRED)
 include("${CARTOGRAPHER_CMAKE_DIR}/functions.cmake")
 set(BUILD_SHARED_LIBS OFF)
@@ -60,7 +59,7 @@ include_directories(
   include
   )
 
-add_library(${PROJECT_NAME} SHARED
+add_library(${PROJECT_NAME}
   src/drawable_submap.cpp
   src/ogre_slice.cpp
   src/submaps_display.cpp
