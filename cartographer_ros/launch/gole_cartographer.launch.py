@@ -52,6 +52,7 @@ def generate_launch_description():
             'use_sim_time',
             default_value='false',
             description='Use simulation (Gazebo) clock if true'),
+        DeclareLaunchArgument("robot", default_value="gole", description="robot_name"), 
 
         Node(
             package='cartographer_ros',
@@ -60,7 +61,14 @@ def generate_launch_description():
             output='screen',
             parameters=[{'use_sim_time': use_sim_time}],
             arguments=['-configuration_directory', cartographer_config_dir,
-                       '-configuration_basename', configuration_basename]),
+                       '-configuration_basename', configuration_basename, 
+                       '-use_sim_time', use_sim_time],
+            remappings=[
+            ("/points2", "/fusion"), # Remapping pointcloud2 topic to /fusion
+            ("/odom", "/gole/odom_sim"), # Remapping odom topic to /gole/odom_sim
+            ("/imu_link", "/imu_plugin_gazebo/out"), # Remapping imu topic to gazebo_imu_plugin
+
+            ]),
 
         DeclareLaunchArgument(
             'resolution',

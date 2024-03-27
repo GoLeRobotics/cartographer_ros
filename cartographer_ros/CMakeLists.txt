@@ -157,7 +157,7 @@ install(DIRECTORY include/
   DESTINATION include/
 )
 
-install(DIRECTORY configuration_files urdf launch
+install(DIRECTORY configuration_files urdf launch rviz
   DESTINATION share/${PROJECT_NAME}/
 )
 
