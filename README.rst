@@ -18,6 +18,10 @@ Cartographer ROS Integration
 
 |build| |docs| |license|
 
+install
+=======
+sudo apt install ros-humble-cartographer
+
 Purpose
 =======
 
