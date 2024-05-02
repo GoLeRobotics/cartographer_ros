@@ -31,7 +31,8 @@ def generate_launch_description():
     cartographer_config_dir = LaunchConfiguration('cartographer_config_dir', default=os.path.join(
                                                   cartographer_prefix, 'configuration_files'))
     configuration_basename = LaunchConfiguration('configuration_basename',
-                                                 default='gole_cartographer_2d.lua')
+                                                 default='gole_cartographer_2d_localization.lua')
+    load_state_filename = LaunchConfiguration('load_state_filename')
 
     resolution = LaunchConfiguration('resolution', default='0.05')
     publish_period_sec = LaunchConfiguration('publish_period_sec', default='1.0')
@@ -53,6 +54,7 @@ def generate_launch_description():
             default_value='false',
             description='Use simulation (Gazebo) clock if true'),
         DeclareLaunchArgument("robot", default_value="gole", description="robot_name"), 
+        DeclareLaunchArgument("load_state_filename", description="load state file for pure localization"), 
 
         Node(
             package='cartographer_ros',
@@ -61,7 +63,8 @@ def generate_launch_description():
             output='screen',
             parameters=[{'use_sim_time': use_sim_time}],
             arguments=['-configuration_directory', cartographer_config_dir,
-                       '-configuration_basename', configuration_basename, 
+                       '-configuration_basename', configuration_basename,
+                       '-load_state_filename', load_state_filename,
                        '-use_sim_time', use_sim_time],
             remappings=[
             ("/points2", "/fusion"), # Remapping pointcloud2 topic to /fusion
