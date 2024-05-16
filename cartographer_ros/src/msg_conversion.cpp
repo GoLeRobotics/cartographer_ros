@@ -42,6 +42,10 @@
 #include "sensor_msgs/msg/multi_echo_laser_scan.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
 
+// shared memory
+#include "shared_memory.h"    // utility::SharedMemory feature
+#include "memory/odomcrt_state.h"
+
 namespace {
 
 // Sizes of PCL point types have to be 4n floats for alignment, as described in
@@ -322,12 +326,26 @@ geometry_msgs::msg::Transform ToGeometryMsgTransform(const Rigid3d& rigid3d) {
 }
 
 geometry_msgs::msg::Pose ToGeometryMsgPose(const Rigid3d& rigid3d) {
+  static auto&& odom_shm_ = utility::SharedMemory<shared_memory::OdomcrtState>("gole_001");
+  static auto&& odom_state_ = odom_shm_.GetData();
+
   geometry_msgs::msg::Pose pose;
   pose.position = ToGeometryMsgPoint(rigid3d.translation());
   pose.orientation.w = rigid3d.rotation().w();
   pose.orientation.x = rigid3d.rotation().x();
   pose.orientation.y = rigid3d.rotation().y();
   pose.orientation.z = rigid3d.rotation().z();
+
+  odom_state_.p_ob[0] = pose.position.x;
+  odom_state_.p_ob[1] = pose.position.y;
+  odom_state_.p_ob[2] = pose.position.z;
+  odom_state_.quat_ob[0] = pose.orientation.x;
+  odom_state_.quat_ob[1] = pose.orientation.y;
+  odom_state_.quat_ob[2] = pose.orientation.z;
+  odom_state_.quat_ob[3] = pose.orientation.w;
+
+  odom_shm_.SetData(odom_state_);
+
   return pose;
 }
 
