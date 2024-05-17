@@ -329,12 +329,34 @@ geometry_msgs::msg::Pose ToGeometryMsgPose(const Rigid3d& rigid3d) {
   static auto&& odom_shm_ = utility::SharedMemory<shared_memory::OdomcrtState>("gole_001");
   static auto&& odom_state_ = odom_shm_.GetData();
 
-  geometry_msgs::msg::Pose pose;
+  static geometry_msgs::msg::Pose pose;
   pose.position = ToGeometryMsgPoint(rigid3d.translation());
   pose.orientation.w = rigid3d.rotation().w();
   pose.orientation.x = rigid3d.rotation().x();
   pose.orientation.y = rigid3d.rotation().y();
   pose.orientation.z = rigid3d.rotation().z();
+  static Eigen::Vector3f angles;
+  const auto x = rigid3d.rotation().x();
+  const auto y = rigid3d.rotation().y();
+  const auto z = rigid3d.rotation().z();
+  const auto w = rigid3d.rotation().w();
+
+  // roll (x-axis rotation)
+  double sinr_cosp = 2 * (w * x + y * z);
+  double cosr_cosp = 1 - 2 * (x * x + y * y);
+  angles[2] = std::atan2(sinr_cosp, cosr_cosp);
+
+  // pitch (y-axis rotation)
+  double sinp = 2 * (w * y - z * x);
+  if (std::abs(sinp) >= 1)
+      angles[1] = std::copysign(M_PI / 2, sinp); // use 90 degrees if out of range
+  else
+      angles[1] = std::asin(sinp);
+
+  // yaw (z-axis rotation)
+  double siny_cosp = 2 * (w * z + x * y);
+  double cosy_cosp = 1 - 2 * (y * y + z * z);
+  angles[0] = std::atan2(siny_cosp, cosy_cosp);
 
   odom_state_.p_ob[0] = pose.position.x;
   odom_state_.p_ob[1] = pose.position.y;
@@ -343,6 +365,9 @@ geometry_msgs::msg::Pose ToGeometryMsgPose(const Rigid3d& rigid3d) {
   odom_state_.quat_ob[1] = pose.orientation.y;
   odom_state_.quat_ob[2] = pose.orientation.z;
   odom_state_.quat_ob[3] = pose.orientation.w;
+  odom_state_.eur_ob[0] = angles[2];
+  odom_state_.eur_ob[1] = angles[1];
+  odom_state_.eur_ob[2] = angles[0];
 
   odom_shm_.SetData(odom_state_);
 

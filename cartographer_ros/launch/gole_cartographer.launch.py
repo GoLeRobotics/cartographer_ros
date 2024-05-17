@@ -66,7 +66,7 @@ def generate_launch_description():
             remappings=[
             ("/points2", "/fusion"), # Remapping pointcloud2 topic to /fusion
             ("/odom", "/gole_001/odom"), #Remapping odom topic to /gole/odom_sim
-            ("/imu", "/imu_plugin/out"), # Remapping imu topic to gazebo_imu_plugin
+            ("/imu", "/imu/data_raw"), # Remapping imu topic to gazebo_imu_plugin
 
             ]),
 
