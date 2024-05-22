@@ -326,8 +326,8 @@ geometry_msgs::msg::Transform ToGeometryMsgTransform(const Rigid3d& rigid3d) {
 }
 
 geometry_msgs::msg::Pose ToGeometryMsgPose(const Rigid3d& rigid3d) {
-  static auto&& odom_shm_ = utility::SharedMemory<shared_memory::OdomcrtState>("gole_001");
-  static auto&& odom_state_ = odom_shm_.GetData();
+  static auto&& odomcrt_shm_ = utility::SharedMemory<shared_memory::OdomcrtState>("gole_001");
+  static auto&& odomcrt_state_ = odom_shm_.GetData();
 
   static geometry_msgs::msg::Pose pose;
   pose.position = ToGeometryMsgPoint(rigid3d.translation());
@@ -358,18 +358,18 @@ geometry_msgs::msg::Pose ToGeometryMsgPose(const Rigid3d& rigid3d) {
   double cosy_cosp = 1 - 2 * (y * y + z * z);
   angles[0] = std::atan2(siny_cosp, cosy_cosp);
 
-  odom_state_.p_ob[0] = pose.position.x;
-  odom_state_.p_ob[1] = pose.position.y;
-  odom_state_.p_ob[2] = pose.position.z;
-  odom_state_.quat_ob[0] = pose.orientation.x;
-  odom_state_.quat_ob[1] = pose.orientation.y;
-  odom_state_.quat_ob[2] = pose.orientation.z;
-  odom_state_.quat_ob[3] = pose.orientation.w;
-  odom_state_.eur_ob[0] = angles[2];
-  odom_state_.eur_ob[1] = angles[1];
-  odom_state_.eur_ob[2] = angles[0];
+  odomcrt_state_.p_ob[0] = pose.position.x;
+  odomcrt_state_.p_ob[1] = pose.position.y;
+  odomcrt_state_.p_ob[2] = pose.position.z;
+  odomcrt_state_.quat_ob[0] = pose.orientation.x;
+  odomcrt_state_.quat_ob[1] = pose.orientation.y;
+  odomcrt_state_.quat_ob[2] = pose.orientation.z;
+  odomcrt_state_.quat_ob[3] = pose.orientation.w;
+  odomcrt_state_.eur_ob[0] = angles[2];
+  odomcrt_state_.eur_ob[1] = angles[1];
+  odomcrt_state_.eur_ob[2] = angles[0];
 
-  odom_shm_.SetData(odom_state_);
+  odomcrt_shm_.SetData(odomcrt_state_);
 
   return pose;
 }
