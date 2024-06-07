@@ -33,7 +33,8 @@ def generate_launch_description():
     configuration_basename = LaunchConfiguration('configuration_basename',
                                                  default='gole_cartographer_2d_localization.lua')
     load_state_filename = LaunchConfiguration('load_state_filename')
-
+    start_trajectory_with_default_topics = LaunchConfiguration('start_trajectory_with_default_topics')
+    
     resolution = LaunchConfiguration('resolution', default='0.05')
     publish_period_sec = LaunchConfiguration('publish_period_sec', default='1.0')
 
@@ -54,7 +55,9 @@ def generate_launch_description():
             default_value='false',
             description='Use simulation (Gazebo) clock if true'),
         DeclareLaunchArgument("robot", default_value="gole", description="robot_name"), 
-        DeclareLaunchArgument("load_state_filename", description="load state file for pure localization"), 
+        DeclareLaunchArgument("load_state_filename", description="load state file for pure localization"),
+        DeclareLaunchArgument("start_trajectory_with_default_topics",  default_value='false',
+                              description="if true, Enable to immediately start the first trajectory with default topics."),  
 
         Node(
             package='cartographer_ros',
@@ -65,11 +68,12 @@ def generate_launch_description():
             arguments=['-configuration_directory', cartographer_config_dir,
                        '-configuration_basename', configuration_basename,
                        '-load_state_filename', load_state_filename,
+                       '-start_trajectory_with_default_topics', start_trajectory_with_default_topics,
                        '-use_sim_time', use_sim_time],
             remappings=[
             ("/points2", "/fusion"), # Remapping pointcloud2 topic to /fusion
-            ("/odom", "/gole_001/odom"), #Remapping odom topic to /gole/odom_sim
-            ("/imu", "/imu/data_raw"), # Remapping imu topic to gazebo_imu_plugin
+            ("/odom", "/gole_001/odom_sim"), #Remapping odom topic to /gole/odom_sim
+            ("/imu", "/imu_plugin/out"), # Remapping imu topic to gazebo_imu_plugin
 
             ]),
 
