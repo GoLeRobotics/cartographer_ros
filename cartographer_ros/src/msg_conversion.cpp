@@ -326,8 +326,8 @@ geometry_msgs::msg::Transform ToGeometryMsgTransform(const Rigid3d& rigid3d) {
 }
 
 geometry_msgs::msg::Pose ToGeometryMsgPose(const Rigid3d& rigid3d) {
-  static auto&& odom_shm_ = utility::SharedMemory<shared_memory::OdomStateCartographer>("gole_001");
-  static auto&& odom_state_ = odom_shm_.GetData();
+  static auto&& odomcrt_shm_ = utility::SharedMemory<shared_memory::OdomStateCartographer>("gole_001");
+  static auto&& odomcrt_state_ = odomcrt_shm_.GetData();
 
   static geometry_msgs::msg::Pose pose;
   pose.position = ToGeometryMsgPoint(rigid3d.translation());
