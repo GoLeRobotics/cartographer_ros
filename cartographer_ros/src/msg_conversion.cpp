@@ -44,7 +44,7 @@
 
 // shared memory
 #include "shared_memory.h"    // utility::SharedMemory feature
-#include "memory/odomcrt_state.h"
+#include "memory/odom_state_cartographer.h"
 
 namespace {
 
