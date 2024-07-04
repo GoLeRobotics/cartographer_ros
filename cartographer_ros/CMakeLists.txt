@@ -50,18 +50,10 @@ find_package(urdf REQUIRED)
 find_package(urdfdom_headers REQUIRED)
 find_package(visualization_msgs REQUIRED)
 
-#shared_memory
-set(GOLE_CORE_LIB $ENV{GOLE_CORE_LIB})
-find_library(SHARED_MEMORY_LIB shared_memory PATHS ${GOLE_CORE_LIB})
-message("Shared_memory executable: ${SHARED_MEMORY_LIB}")
-set(GOLE_INCLUDE_DIR $ENV{PYTHON_SITE_PKGS}/gole/gole_cpp/include/)
-message("gole include dir: ${GOLE_INCLUDE_DIR}")
-
 include_directories(
   include
   ${PCL_INCLUDE_DIRS}
   ${urdfdom_headers_INCLUDE_DIRS}
-  ${GOLE_INCLUDE_DIR}
 )
 
 # Library
@@ -111,43 +103,35 @@ set(dependencies
 ament_target_dependencies(${PROJECT_NAME}
   ${dependencies}
   )
-target_link_libraries(${PROJECT_NAME} cartographer ${PCL_LIBRARIES} ${SHARED_MEMORY_LIB})
-target_include_directories(${PROJECT_NAME} PUBLIC include ${GOLE_INCLUDE_DIR})
+target_link_libraries(${PROJECT_NAME} cartographer ${PCL_LIBRARIES})
 
 # Executables
 add_executable(cartographer_node src/node_main.cpp)
-target_link_libraries(cartographer_node ${PROJECT_NAME} ${SHARED_MEMORY_LIB})
-target_include_directories(cartographer_node PUBLIC include ${GOLE_INCLUDE_DIR})
+target_link_libraries(cartographer_node ${PROJECT_NAME})
 ament_target_dependencies(cartographer_node ${dependencies})
 
 add_executable(cartographer_occupancy_grid_node src/occupancy_grid_node_main.cpp)
-target_link_libraries(cartographer_occupancy_grid_node ${PROJECT_NAME} ${SHARED_MEMORY_LIB})
-target_include_directories(cartographer_occupancy_grid_node PUBLIC include ${GOLE_INCLUDE_DIR})
+target_link_libraries(cartographer_occupancy_grid_node ${PROJECT_NAME})
 ament_target_dependencies(cartographer_occupancy_grid_node ${dependencies})
 
 add_executable(cartographer_offline_node src/offline_node_main.cpp)
-target_link_libraries(cartographer_offline_node ${PROJECT_NAME} ${SHARED_MEMORY_LIB})
-target_include_directories(cartographer_offline_node PUBLIC include ${GOLE_INCLUDE_DIR})
+target_link_libraries(cartographer_offline_node ${PROJECT_NAME})
 ament_target_dependencies(cartographer_offline_node ${dependencies})
 
 add_executable(cartographer_assets_writer src/assets_writer_main.cpp)
-target_link_libraries(cartographer_assets_writer ${PROJECT_NAME} ${SHARED_MEMORY_LIB})
-target_include_directories(cartographer_assets_writer PUBLIC include ${GOLE_INCLUDE_DIR})
+target_link_libraries(cartographer_assets_writer ${PROJECT_NAME})
 ament_target_dependencies(cartographer_assets_writer ${dependencies})
 
 add_executable(cartographer_pbstream_map_publisher src/pbstream_map_publisher_main.cpp)
-target_link_libraries(cartographer_pbstream_map_publisher ${PROJECT_NAME} ${SHARED_MEMORY_LIB})
-target_include_directories(cartographer_pbstream_map_publisher PUBLIC include ${GOLE_INCLUDE_DIR})
+target_link_libraries(cartographer_pbstream_map_publisher ${PROJECT_NAME})
 ament_target_dependencies(cartographer_pbstream_map_publisher ${dependencies})
 
 add_executable(cartographer_pbstream_to_ros_map src/pbstream_to_ros_map_main.cpp)
-target_link_libraries(cartographer_pbstream_to_ros_map ${PROJECT_NAME} ${SHARED_MEMORY_LIB})
-target_include_directories(cartographer_pbstream_to_ros_map PUBLIC include ${GOLE_INCLUDE_DIR})
+target_link_libraries(cartographer_pbstream_to_ros_map ${PROJECT_NAME})
 ament_target_dependencies(cartographer_pbstream_to_ros_map ${dependencies})
 
 add_executable(cartographer_rosbag_validate src/rosbag_validate_main.cpp)
-target_link_libraries(cartographer_rosbag_validate ${PROJECT_NAME} ${SHARED_MEMORY_LIB})
-target_include_directories(cartographer_rosbag_validate PUBLIC include ${GOLE_INCLUDE_DIR})
+target_link_libraries(cartographer_rosbag_validate ${PROJECT_NAME})
 ament_target_dependencies(cartographer_rosbag_validate ${dependencies})
 
 

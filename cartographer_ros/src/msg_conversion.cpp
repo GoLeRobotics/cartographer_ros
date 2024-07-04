@@ -42,10 +42,6 @@
 #include "sensor_msgs/msg/multi_echo_laser_scan.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
 
-// shared memory
-#include "shared_memory.h"    // utility::SharedMemory feature
-#include "memory/odom_state_cartographer.h"
-
 namespace {
 
 // Sizes of PCL point types have to be 4n floats for alignment, as described in
@@ -326,51 +322,12 @@ geometry_msgs::msg::Transform ToGeometryMsgTransform(const Rigid3d& rigid3d) {
 }
 
 geometry_msgs::msg::Pose ToGeometryMsgPose(const Rigid3d& rigid3d) {
-  static auto&& odomcrt_shm_ = utility::SharedMemory<shared_memory::OdomStateCartographer>("gole_001");
-  static auto&& odomcrt_state_ = odomcrt_shm_.GetData();
-
-  static geometry_msgs::msg::Pose pose;
+  geometry_msgs::msg::Pose pose;
   pose.position = ToGeometryMsgPoint(rigid3d.translation());
   pose.orientation.w = rigid3d.rotation().w();
   pose.orientation.x = rigid3d.rotation().x();
   pose.orientation.y = rigid3d.rotation().y();
   pose.orientation.z = rigid3d.rotation().z();
-  static Eigen::Vector3f angles;
-  const auto x = rigid3d.rotation().x();
-  const auto y = rigid3d.rotation().y();
-  const auto z = rigid3d.rotation().z();
-  const auto w = rigid3d.rotation().w();
-
-  // roll (x-axis rotation)
-  double sinr_cosp = 2 * (w * x + y * z);
-  double cosr_cosp = 1 - 2 * (x * x + y * y);
-  angles[2] = std::atan2(sinr_cosp, cosr_cosp);
-
-  // pitch (y-axis rotation)
-  double sinp = 2 * (w * y - z * x);
-  if (std::abs(sinp) >= 1)
-      angles[1] = std::copysign(M_PI / 2, sinp); // use 90 degrees if out of range
-  else
-      angles[1] = std::asin(sinp);
-
-  // yaw (z-axis rotation)
-  double siny_cosp = 2 * (w * z + x * y);
-  double cosy_cosp = 1 - 2 * (y * y + z * z);
-  angles[0] = std::atan2(siny_cosp, cosy_cosp);
-
-  odomcrt_state_.p_ob[0] = pose.position.x;
-  odomcrt_state_.p_ob[1] = pose.position.y;
-  odomcrt_state_.p_ob[2] = pose.position.z;
-  odomcrt_state_.quat_ob[0] = pose.orientation.x;
-  odomcrt_state_.quat_ob[1] = pose.orientation.y;
-  odomcrt_state_.quat_ob[2] = pose.orientation.z;
-  odomcrt_state_.quat_ob[3] = pose.orientation.w;
-  odomcrt_state_.eur_ob[0] = angles[2];
-  odomcrt_state_.eur_ob[1] = angles[1];
-  odomcrt_state_.eur_ob[2] = angles[0];
-
-  odomcrt_shm_.SetData(odomcrt_state_);
-
   return pose;
 }
 
