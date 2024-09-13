@@ -34,7 +34,9 @@
 #include "cartographer_ros/node_options.h"
 #include "cartographer_ros/trajectory_options.h"
 #include "cartographer_ros_msgs/srv/finish_trajectory.hpp"
+#include "cartographer_ros_msgs/srv/delete_trajectory.hpp"
 #include "cartographer_ros_msgs/srv/get_trajectory_states.hpp"
+#include "cartographer_ros_msgs/srv/load_state.hpp"
 #include "cartographer_ros_msgs/srv/read_metrics.hpp"
 #include "cartographer_ros_msgs/srv/start_trajectory.hpp"
 #include "cartographer_ros_msgs/msg/status_response.hpp"
@@ -42,6 +44,8 @@
 #include "cartographer_ros_msgs/msg/submap_list.hpp"
 #include "cartographer_ros_msgs/srv/submap_query.hpp"
 #include "cartographer_ros_msgs/srv/write_state.hpp"
+#include "cartographer_ros_msgs/srv/write_state.hpp"
+
 #include "nav_msgs/msg/odometry.hpp"
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/imu.hpp>
@@ -140,9 +144,15 @@ class Node {
   bool handleStartTrajectory(
       const cartographer_ros_msgs::srv::StartTrajectory::Request::SharedPtr request,
       cartographer_ros_msgs::srv::StartTrajectory::Response::SharedPtr response);
+  bool handleDeleteTrajectory(
+      const cartographer_ros_msgs::srv::DeleteTrajectory::Request::SharedPtr request,
+      cartographer_ros_msgs::srv::DeleteTrajectory::Response::SharedPtr response);
   bool handleFinishTrajectory(
       const cartographer_ros_msgs::srv::FinishTrajectory::Request::SharedPtr request,
       cartographer_ros_msgs::srv::FinishTrajectory::Response::SharedPtr response);
+  bool handleLoadState(
+      const cartographer_ros_msgs::srv::LoadState::Request::SharedPtr request,
+      cartographer_ros_msgs::srv::LoadState::Response::SharedPtr response);
   bool handleWriteState(
       const cartographer_ros_msgs::srv::WriteState::Request::SharedPtr request,
       cartographer_ros_msgs::srv::WriteState::Response::SharedPtr response);
@@ -168,6 +178,8 @@ class Node {
   bool ValidateTrajectoryOptions(const TrajectoryOptions& options);
   bool ValidateTopicNames(const TrajectoryOptions& options);
   cartographer_ros_msgs::msg::StatusResponse FinishTrajectoryUnderLock(
+      int trajectory_id) EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+  cartographer_ros_msgs::msg::StatusResponse DeleteTrajectoryUnderLock(
       int trajectory_id) EXCLUSIVE_LOCKS_REQUIRED(mutex_);
   void MaybeWarnAboutTopicMismatch();
 
@@ -196,7 +208,9 @@ class Node {
   ::rclcpp::Service<cartographer_ros_msgs::srv::SubmapQuery>::SharedPtr submap_query_server_;
   ::rclcpp::Service<cartographer_ros_msgs::srv::TrajectoryQuery>::SharedPtr trajectory_query_server;
   ::rclcpp::Service<cartographer_ros_msgs::srv::StartTrajectory>::SharedPtr start_trajectory_server_;
+  ::rclcpp::Service<cartographer_ros_msgs::srv::DeleteTrajectory>::SharedPtr delete_trajectory_server_;
   ::rclcpp::Service<cartographer_ros_msgs::srv::FinishTrajectory>::SharedPtr finish_trajectory_server_;
+  ::rclcpp::Service<cartographer_ros_msgs::srv::LoadState>::SharedPtr load_state_server_;
   ::rclcpp::Service<cartographer_ros_msgs::srv::WriteState>::SharedPtr write_state_server_;
   ::rclcpp::Service<cartographer_ros_msgs::srv::GetTrajectoryStates>::SharedPtr get_trajectory_states_server_;
   ::rclcpp::Service<cartographer_ros_msgs::srv::ReadMetrics>::SharedPtr read_metrics_server_;
@@ -228,6 +242,8 @@ class Node {
   std::unordered_map<int, std::vector<Subscriber>> subscribers_;
   std::unordered_set<std::string> subscribed_topics_;
   std::unordered_set<int> trajectories_scheduled_for_finish_;
+  std::unordered_set<int> trajectories_scheduled_for_delete_;
+
 
   // The timer for publishing local trajectory data (i.e. pose transforms and
   // range data point clouds) is a regular timer which is not triggered when

@@ -139,10 +139,18 @@ Node::Node(
       kStartTrajectoryServiceName,
       std::bind(
           &Node::handleStartTrajectory, this, std::placeholders::_1, std::placeholders::_2));
+  delete_trajectory_server_ = node_->create_service<cartographer_ros_msgs::srv::DeleteTrajectory>(
+      kDeleteTrajectoryServiceName,
+      std::bind(
+          &Node::handleDeleteTrajectory, this, std::placeholders::_1, std::placeholders::_2));
   finish_trajectory_server_ = node_->create_service<cartographer_ros_msgs::srv::FinishTrajectory>(
       kFinishTrajectoryServiceName,
       std::bind(
           &Node::handleFinishTrajectory, this, std::placeholders::_1, std::placeholders::_2));
+  load_state_server_ = node_->create_service<cartographer_ros_msgs::srv::LoadState>(
+      kLoadStateServiceName,
+      std::bind(
+          &Node::handleLoadState, this, std::placeholders::_1, std::placeholders::_2));
   write_state_server_ = node_->create_service<cartographer_ros_msgs::srv::WriteState>(
       kWriteStateServiceName,
       std::bind(
@@ -541,6 +549,43 @@ cartographer_ros_msgs::msg::StatusResponse Node::TrajectoryStateToStatus(
   return status_response;
 }
 
+cartographer_ros_msgs::msg::StatusResponse Node::DeleteTrajectoryUnderLock(
+    const int trajectory_id) {
+  cartographer_ros_msgs::msg::StatusResponse status_response;
+  if (trajectories_scheduled_for_delete_.count(trajectory_id)) {
+    status_response.message =
+        "Trajectory " + std::to_string(trajectory_id) + " already pending to Delete.";
+    status_response.code = cartographer_ros_msgs::msg::StatusCode::OK;
+    LOG(INFO) << status_response.message;
+    return status_response;
+  }
+
+  // First, check if we can actually finish the trajectory.
+  status_response = TrajectoryStateToStatus(
+      trajectory_id, {TrajectoryState::ACTIVE} /* valid states */);
+  if (status_response.code != cartographer_ros_msgs::msg::StatusCode::OK) {
+    LOG(ERROR) << "Can't delete trajectory: " << status_response.message;
+    return status_response;
+  }
+
+  // Shutdown the subscribers of this trajectory.
+  // A valid case with no subscribers is e.g. if we just visualize states.
+  if (subscribers_.count(trajectory_id)) {
+    for (auto& entry : subscribers_[trajectory_id]) {
+      entry.subscriber.reset();
+      subscribed_topics_.erase(entry.topic);
+      LOG(INFO) << "Shutdown the subscriber of [" << entry.topic << "]";
+    }
+    CHECK_EQ(subscribers_.erase(trajectory_id), 1);
+  }
+  map_builder_bridge_->DeleteTrajectory(trajectory_id);
+  trajectories_scheduled_for_delete_.emplace(trajectory_id);
+  status_response.message =
+      "Deleted trajectory " + std::to_string(trajectory_id) + ".";
+  status_response.code = cartographer_ros_msgs::msg::StatusCode::OK;
+  return status_response;
+}
+
 cartographer_ros_msgs::msg::StatusResponse Node::FinishTrajectoryUnderLock(
     const int trajectory_id) {
   cartographer_ros_msgs::msg::StatusResponse status_response;
@@ -711,6 +756,24 @@ bool Node::handleFinishTrajectory(
     cartographer_ros_msgs::srv::FinishTrajectory::Response::SharedPtr response) {
   absl::MutexLock lock(&mutex_);
   response->status = FinishTrajectoryUnderLock(request->trajectory_id);
+  return true;
+}
+
+
+bool Node::handleDeleteTrajectory(
+    const cartographer_ros_msgs::srv::DeleteTrajectory::Request::SharedPtr request,
+    cartographer_ros_msgs::srv::DeleteTrajectory::Response::SharedPtr response) {
+  absl::MutexLock lock(&mutex_);
+  response->status = DeleteTrajectoryUnderLock(request->trajectory_id);
+  return true;
+}
+
+bool Node::handleLoadState(
+    const cartographer_ros_msgs::srv::LoadState::Request::SharedPtr request,
+    cartographer_ros_msgs::srv::LoadState::Response::SharedPtr response) {
+  absl::MutexLock lock(&mutex_);
+  map_builder_bridge_->LoadState(request->filename,
+                                    request->load_frozen_state);
   return true;
 }
 

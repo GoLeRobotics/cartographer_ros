@@ -52,7 +52,9 @@ set(msg_files
 
 set(srv_files
   "srv/FinishTrajectory.srv"
+  "srv/DeleteTrajectory.srv"
   "srv/GetTrajectoryStates.srv"
+  "srv/LoadState.srv"
   "srv/ReadMetrics.srv"
   "srv/StartTrajectory.srv"
   "srv/TrajectoryQuery.srv"
